@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>도라에몽의 핑계빵</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="page-start">
+
+  <div class="start-wrapper">
+
+    <!-- 헤더: 게임 타이틀 -->
+    <header class="start-header">
+      <h1 class="game-title">도라에몽의 핑계빵</h1>
+      <p class="game-subtitle">공부 안 한 이유를 누구보다 빠르게 입력하라!</p>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="start-main">
+
+      <!-- 도라에몽 + 말풍선 + 닉네임 입력 -->
+      <section class="doraemon-chat-section">
+
+        <!-- 도라에몽 이미지 (위아래 float 애니메이션) -->
+        <div class="doraemon-float-wrap">
+          <div class="doraemon-float-box">
+            <img id="doraemon-img" src="images/Doraemong.png" alt="도라에몽"
+              onerror="this.style.display='none'; document.getElementById('doraemon-placeholder').style.display='flex';" />
+            <div id="doraemon-placeholder" class="image-placeholder start-doraemon-placeholder">
+              <span>🤖</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 말풍선 -->
+        <div class="start-speech-bubble">
+          친구야, 이름이 뭐야?<br />
+          암기빵 먹기 전에 이름부터 적자!
+        </div>
+
+      </section>
+
+      <!-- 닉네임 입력 섹션 -->
+      <section class="nickname-section">
+        <div class="input-row">
+          <input type="text" id="nickname-input" class="nickname-input" placeholder="닉네임을 입력하세요" maxlength="10"
+            autocomplete="off" />
+        </div>
+        <!-- 경고 문구 (기본 숨김) -->
+        <p id="nickname-error" class="error-msg hidden">
+          닉네임을 입력해야 빵을 먹을 수 있어!
+        </p>
+      </section>
+
+      <!-- 게임 소개 + 방법 섹션 -->
+      <section class="game-info-section">
+        <div class="game-description">
+          <p>
+            친구야, 공부는 못 했어도 너무 걱정하지 마!<br />
+            핑계빵만 있으면 오늘의 변명은 완벽해!
+          </p>
+        </div>
+
+        <div class="how-to-play">
+          <h2 class="how-to-play-title">암기빵 사용법</h2>
+          <ul class="how-to-play-list">
+            <li>빵 위에 뜬 문장을 제한 시간 안에 정확히 입력하세요.</li>
+            <li>입력 후 <strong>식사</strong> 버튼(또는 엔터)을 누르면 판정합니다.</li>
+            <li>정답 시 기본 100점 + 남은 시간 1초당 10점이 추가됩니다.</li>
+            <li>연속 정답 콤보 시 보너스 점수를 드립니다!</li>
+            <li>총 5라운드, 각 라운드 제한 시간은 8초입니다.</li>
+            <li>랭킹 상위 10명을 결과 화면에서 확인할 수 있습니다.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 시작 버튼 -->
+      <section class="start-btn-section">
+        <button id="start-btn" class="btn btn-primary btn-large">
+          암기빵 먹으러 가기!
+        </button>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="stars.js"></script>
+  <script src="cursor.js"></script>
+  <script src="start.js"></script>
+</body>
+
+</html>
