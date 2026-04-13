@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>도라에몽의 핑계빵 - 게임</title>
+  <!-- 공통 테마 (밤하늘·애니메이션·레이아웃) -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- 게임 그리드 전용 스타일 (basic.css가 필요한 부분만 override) -->
+  <link rel="stylesheet" href="basic.css" />
+</head>
+
+<body class="page-game">
+
+  <div class="game-wrapper">
+
+    <!-- 상단 헤더 -->
+    <header class="game-header">
+      <h1 class="game-title-small">🍞 도라에몽의 핑계빵</h1>
+    </header>
+
+    <!-- 메인 게임 영역 -->
+    <main class="game-main">
+
+      <!-- 정보 박스 3개: 점수 / 라운드 / 남은 시간 -->
+      <section class="info-bar">
+        <div class="info-box" id="score-box">
+          <span class="info-label">점수</span>
+          <span class="info-value" id="score-value">0</span>
+        </div>
+        <div class="info-box" id="round-box">
+          <span class="info-label">라운드</span>
+          <span class="info-value" id="round-value">1 / 5</span>
+        </div>
+        <div class="info-box" id="timer-box">
+          <span class="info-label">남은 시간</span>
+          <span class="info-value" id="timer-value">15</span>
+        </div>
+      </section>
+
+      <!-- ===== 빵 그리드 영역 =====
+           original.html 구조 채택:
+           - .bread-image: 배경 이미지
+           - #questionText: 문제 문장 그리드 (회색 텍스트)
+           - #typedText:    입력 현황 그리드 (맞음/틀림 색상)
+      -->
+      <section class="bread-area">
+        <!-- 식빵 이미지 (없으면 조용히 숨김) -->
+        <img src="images/Bread.png" alt="식빵" class="bread-image" onerror="this.style.display='none';" />
+        <!-- 통합된 문장 전체 레이어 -->
+        <div id="textOverlay" class="bread-text"></div>
+      </section>
+
+      <!-- 실제 키 입력을 받는 숨겨진 textarea
+           화면 밖에 배치하고 JS에서 focus() 호출 -->
+      <textarea id="hiddenInput" class="hidden-input" autocomplete="off" autocorrect="off" autocapitalize="none"
+        spellcheck="false"></textarea>
+
+      <!-- 타이머 프로그레스바 -->
+      <section class="progress-section">
+        <div class="progress-wrap">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </section>
+
+      <!-- 정답/오답/시간초과 피드백 메시지 -->
+      <div id="message" class="message"></div>
+
+      <!-- 버튼 영역: 게임 중 식사 버튼만 표시 -->
+      <section class="button-section">
+        <button id="submit-btn" class="btn btn-primary">
+          식사 🍽️
+        </button>
+      </section>
+
+    </main>
+  </div><!-- /.game-wrapper -->
+
+
+  <!-- ===== 게임 오버 모달 ===== -->
+  <div id="game-over-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 id="modal-title" class="modal-title">게임 종료!</h2>
+      <p id="modal-score" class="modal-score"></p>
+      <div class="modal-btn-row">
+        <button id="view-result-btn" class="btn btn-primary btn-large">결과 보기</button>
+        <button id="modal-home-btn" class="btn btn-secondary btn-large">처음으로</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== 결과 화면 ===== -->
+  <div id="result-section" class="result-overlay hidden">
+    <div class="result-content">
+
+      <!-- 결과 타이틀 -->
+      <h2 id="result-title" class="result-title">OOO의 점수는 000점!</h2>
+
+      <!-- 도라에몽 + 말풍선 -->
+      <div class="result-doraemon-row">
+        <div class="result-doraemon-img-box">
+          <img src="images/Doraemong.png" alt="도라에몽"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="image-placeholder result-doraemon-placeholder"><span>🤖</span></div>
+        </div>
+        <div class="speech-bubble">
+          시험은 모르겠고,<br />합리화 실력은 확실히 올랐어!
+        </div>
+      </div>
+
+      <!-- 랭킹 테이블 -->
+      <div class="ranking-area">
+        <h3 class="ranking-title">🏆 명예의 핑계빵 전당</h3>
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>닉네임</th>
+              <th>점수</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-body">
+            <!-- game.js에서 동적 생성 -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 처음으로 버튼 -->
+      <div class="result-btn-area">
+        <button id="go-home-btn" class="btn btn-secondary btn-large">처음으로</button>
+      </div>
+
+    </div>
+  </div><!-- /#result-section -->
+
+
+  <script src="stars.js"></script>
+  <script src="cursor.js"></script>
+  <script src="game.js"></script>
+</body>
+
+</html>
