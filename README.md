@@ -1,6 +1,6 @@
 # 🍞 도라에몽의 핑계빵
 
-![cover](./images/cover.png)
+![cover](./animal_league/images/cover.png)
 
 > 시험기간 대학생들의 현실적인 핑계를 담은 웹 타자 게임  
 > 공부는 못 했어도, 핑계만큼은 완벽하게.
