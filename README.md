@@ -26,3 +26,6 @@
 
 ## 🚀 배포 링크
 https://likelion-project.onrender.com
+
+## 🎥 시연 영상 링크
+https://youtu.be/HQYJATeevWQ
