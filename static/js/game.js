@@ -2,23 +2,12 @@
    game.js - 게임 화면 동작
    =============================================
    담당 기능:
-   - 닉네임 불러오기 및 검증
-   - 문장 랜덤 선택
-   - 라운드 / 타이머 / 점수 관리
-   - 그리드 렌더링 (원문 + 입력 현황)
-   - 한글 IME(composition) 처리
-   - 숨겨진 textarea 입력 처리
-   - 정답 판정 + 피드백
-   - 게임 오버 모달
-   - 결과 화면 + 랭킹 렌더링
-   - localStorage 랭킹 저장
+   - 닉네임/난이도 불러오기 및 검증
+   - 난이도별 시간 제한과 점수 배율 적용
+   - 누적 콤보 점수 계산
+   - 결과 화면/랭킹에 난이도 표시
    ============================================= */
 
-
-/* ==============================================
-   1. 문장 데이터
-   주제: 공부를 안 해도 되는 웃긴 이유 스타일
-   ============================================== */
 const SENTENCES = [
   '나는 이미 마음속으로 A+을 받았기 때문에 현실에서까지 굳이 공부할 필요는 없다.',
   '오늘은 공부하는 날이 아니라 공부해야 한다는 사실을 받아들이는 날이므로 아직 괜찮다.',
@@ -44,47 +33,34 @@ const SENTENCES = [
   '도라에몽에게 암기빵이 있다면 굳이 이렇게 고생할 필요도 없었을 텐데 너무 불공평한 세상이다.',
   '공부 유튜브 영상의 썸네일을 확인하는 것만으로도 이미 공부 의지를 불태우고 있는 셈이다.',
   '나는 지금 충분히 노력하고 있으며 단지 그 노력의 방향이 공부 쪽이 아닐 뿐인 것이다.',
-  '내일부터 진짜 시작하면 되기 때문에 오늘은 마음의 준비를 하는 소중한 날로 기억될 것이다.',
+  '내일부터 진짜 시작하면 되기 때문에 오늘은 마음의 준비를 하는 소중한 날로 기억될 것이다.'
 ];
 
+const TOTAL_ROUNDS = 5;
+const SCORE_BASE = 200;
+const SCORE_PER_SECOND = 5;
+const TIMER_WARNING_RATIO = 0.25;
+const TIMER_DANGER_RATIO = 0.12;
 
-/* ==============================================
-   2. 게임 설정 상수
-   ============================================== */
-const TOTAL_ROUNDS = 5;    // 총 라운드 수
-const TIME_LIMIT = 30;   // 라운드당 제한 시간 (초)
-const SCORE_BASE = 100;  // 정답 기본 점수
-const SCORE_PER_SECOND = 10;   // 남은 시간 1초당 추가 점수
-const SCORE_COMBO_BONUS = 50;   // 콤보 보너스 (2콤보 이상부터)
-const RANKING_KEY = 'doraemon_bread_ranking'; // localStorage 키
-const RANKING_MAX = 10;   // 랭킹 저장 최대 인원
-const TIMER_WARNING = 4;    // 경고 구간 시작 (초)
-const TIMER_DANGER = 2;    // 위험 구간 시작 (초)
+const DIFFICULTY_SETTINGS = {
+  easy: { label: 'EASY', timeLimit: 30, multiplier: 1.0 },
+  normal: { label: 'NORMAL', timeLimit: 24, multiplier: 1.2 },
+  hard: { label: 'HARD', timeLimit: 18, multiplier: 1.5 }
+};
 
-/* 그리드 한 줄 최대 글자 수 */
-const MAX_COLS = 28;
-
-
-/* ==============================================
-   3. 게임 상태 변수
-   ============================================== */
 let nickname = '';
+let difficultyKey = 'normal';
+let difficulty = DIFFICULTY_SETTINGS.normal;
 let currentRound = 1;
-let score = 0;
+let rawScore = 0;
+let finalScore = 0;
 let combo = 0;
-let timeLeft = TIME_LIMIT;
+let timeLeft = difficulty.timeLimit;
 let timerInterval = null;
 let currentSentence = '';
 let usedIndices = [];
-
-/* IME(한글 조합) 상태 */
 let isComposing = false;
-let composingText = '';
 
-
-/* ==============================================
-   4. DOM 요소 참조
-   ============================================== */
 const scoreValueEl = document.getElementById('score-value');
 const roundValueEl = document.getElementById('round-value');
 const timerValueEl = document.getElementById('timer-value');
@@ -92,43 +68,55 @@ const timerBoxEl = document.getElementById('timer-box');
 const progressBarEl = document.getElementById('progressBar');
 const submitBtnEl = document.getElementById('submit-btn');
 const messageEl = document.getElementById('message');
-
-/* 그리드 영역 */
+const difficultyValueEl = document.getElementById('difficulty-value');
 const textOverlayEl = document.getElementById('textOverlay');
 const hiddenInputEl = document.getElementById('hiddenInput');
-
-/* 모달 요소 */
 const gameOverModalEl = document.getElementById('game-over-modal');
 const modalTitleEl = document.getElementById('modal-title');
 const modalScoreEl = document.getElementById('modal-score');
 const viewResultBtnEl = document.getElementById('view-result-btn');
 const modalHomeBtnEl = document.getElementById('modal-home-btn');
-
-/* 결과 화면 요소 */
 const resultSectionEl = document.getElementById('result-section');
 const resultTitleEl = document.getElementById('result-title');
+const resultSubtitleEl = document.getElementById('result-subtitle');
 const rankingBodyEl = document.getElementById('ranking-body');
 const goHomeBtnEl = document.getElementById('go-home-btn');
+const breadImageEl = document.getElementById('bread-image');
+const resultDoraemonImgEl = document.getElementById('result-doraemon-img');
 
-
-/* ==============================================
-   5. 초기화 - 페이지 로드 시 실행
-   ============================================== */
 document.addEventListener('DOMContentLoaded', function () {
+  if (breadImageEl) {
+    breadImageEl.addEventListener('error', function () {
+      breadImageEl.style.display = 'none';
+    }, { once: true });
+  }
 
-  /* 닉네임 불러오기 */
+  if (resultDoraemonImgEl) {
+    resultDoraemonImgEl.addEventListener('error', function () {
+      resultDoraemonImgEl.style.display = 'none';
+      const placeholder = resultDoraemonImgEl.nextElementSibling;
+      if (placeholder) {
+        placeholder.style.display = 'flex';
+      }
+    }, { once: true });
+  }
+
   nickname = sessionStorage.getItem('nickname') || '';
+  difficultyKey = (sessionStorage.getItem('difficulty') || '').toLowerCase();
+  difficulty = DIFFICULTY_SETTINGS[difficultyKey];
 
-  if (nickname === '') {
-    alert('닉네임이 없어! 시작 화면에서 이름을 입력하고 오자!');
-    window.location.href = 'start.html';
+  if (!/^[0-9A-Za-z가-힣 _-]{1,10}$/.test(nickname) || !difficulty) {
+    alert('닉네임 또는 난이도 정보가 올바르지 않아! 시작 화면에서 다시 선택하고 오자!');
+    sessionStorage.removeItem('nickname');
+    sessionStorage.removeItem('difficulty');
+    window.location.href = '/start';
     return;
   }
 
-  /* 버튼 이벤트 */
+  difficultyValueEl.textContent = difficulty.label;
+
   submitBtnEl.addEventListener('click', handleSubmit);
 
-  /* 엔터로도 제출 */
   hiddenInputEl.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -136,59 +124,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  /* 실시간 그리드 렌더링 */
   hiddenInputEl.addEventListener('input', function () {
     renderUnifiedGrid(hiddenInputEl.value);
   });
 
-  /* 한글 IME 조합 시작 */
   hiddenInputEl.addEventListener('compositionstart', function () {
     isComposing = true;
   });
 
-  /* 조합 중 (조합 글자 미리 표시) */
   hiddenInputEl.addEventListener('compositionupdate', function () {
     renderUnifiedGrid(hiddenInputEl.value);
   });
 
-  /* 조합 완료 */
   hiddenInputEl.addEventListener('compositionend', function () {
     isComposing = false;
     renderUnifiedGrid(hiddenInputEl.value);
   });
 
-  /* 모달 버튼 */
   viewResultBtnEl.addEventListener('click', showResultScreen);
-  modalHomeBtnEl.addEventListener('click', function () {
-    sessionStorage.removeItem('nickname');
-    window.location.href = 'start.html';
-  });
+  modalHomeBtnEl.addEventListener('click', returnToStart);
+  goHomeBtnEl.addEventListener('click', returnToStart);
 
-  /* 결과 화면 버튼 */
-  goHomeBtnEl.addEventListener('click', function () {
-    sessionStorage.removeItem('nickname');
-    window.location.href = 'start.html';
-  });
-
-  /* 항상 입력창에 포커스 유지 (타자 안 쳐지는 현상 방지) */
   document.addEventListener('click', function () {
     if (hiddenInputEl && !hiddenInputEl.disabled) {
       hiddenInputEl.focus();
     }
   });
 
-  /* 게임 시작 */
   startGame();
 });
 
-
-/* ==============================================
-   6. 게임 흐름 함수
-   ============================================== */
-
 function startGame() {
   currentRound = 1;
-  score = 0;
+  rawScore = 0;
+  finalScore = 0;
   combo = 0;
   usedIndices = [];
 
@@ -197,30 +166,19 @@ function startGame() {
 }
 
 function startRound() {
-  /* 라운드 표시 */
   roundValueEl.textContent = currentRound + ' / ' + TOTAL_ROUNDS;
-
-  /* 문장 선택 */
   currentSentence = pickRandomSentence();
-
-  /* IME 상태 초기화 */
   isComposing = false;
-  composingText = '';
-
-  /* 그리드 렌더링 */
   renderUnifiedGrid('');
 
-  /* 입력창 초기화 */
   hiddenInputEl.value = '';
   hiddenInputEl.disabled = false;
   hiddenInputEl.focus();
 
-  /* 피드백 메시지 초기화 */
   messageEl.textContent = '';
   messageEl.className = 'message';
 
-  /* 타이머 리셋 */
-  timeLeft = TIME_LIMIT;
+  timeLeft = difficulty.timeLimit;
   updateTimerDisplay();
   updateProgressBar();
   resetTimerStyle();
@@ -244,26 +202,14 @@ function handleTimeOver() {
   hiddenInputEl.disabled = true;
   combo = 0;
 
-  showMessage('시간 초과! ⏰', false);
-
-  if (currentRound < TOTAL_ROUNDS) {
-    setTimeout(function () {
-      currentRound++;
-      startRound();
-    }, 900);
-  } else {
-    setTimeout(function () {
-      showGameOverModal('타임 오버!');
-    }, 900);
-  }
+  showMessage('시간 초과! 콤보가 끊겼어 ⏰', false);
+  queueNextRound('타임 오버!');
 }
 
 function handleSubmit() {
   clearInterval(timerInterval);
 
   const userAnswer = hiddenInputEl.value;
-
-  /* 빈 입력 무시 */
   if (userAnswer === '') {
     timerInterval = setInterval(tickTimer, 1000);
     return;
@@ -272,60 +218,49 @@ function handleSubmit() {
   hiddenInputEl.disabled = true;
 
   if (userAnswer === currentSentence) {
-    /* ── 정답 ── */
-    const gained = calcScore(timeLeft);
-    score += gained;
-    combo++;
+    const nextCombo = combo + 1;
+    const gained = calcRawScore(timeLeft, nextCombo);
+    combo = nextCombo;
+    rawScore += gained;
+    finalScore = getAdjustedScore(rawScore);
     updateScoreDisplay();
 
-    showMessage('정답! 🎉 +' + gained + '점', true);
+    showMessage(
+      '정답! 🎉 +' + getAdjustedScore(gained) + '점 (' + difficulty.label + ' x' + difficulty.multiplier + ', ' + combo + '콤보)',
+      true
+    );
 
-    if (currentRound < TOTAL_ROUNDS) {
-      setTimeout(function () {
-        currentRound++;
-        startRound();
-      }, 900);
-    } else {
-      setTimeout(function () {
-        showGameOverModal('게임 종료!');
-      }, 900);
-    }
+    queueNextRound('게임 종료!');
   } else {
-    /* ── 오답 ── */
     combo = 0;
-
-    showMessage('틀렸어... 😢 다음 기회에!', false);
-
-    if (currentRound < TOTAL_ROUNDS) {
-      setTimeout(function () {
-        currentRound++;
-        startRound();
-      }, 900);
-    } else {
-      setTimeout(function () {
-        showGameOverModal('게임 종료!');
-      }, 900);
-    }
+    showMessage('틀렸어... 😢 콤보가 끊겼어!', false);
+    queueNextRound('게임 종료!');
   }
 }
 
-
-/* ==============================================
-   7. 그리드 통합 렌더링 함수
-   ============================================== */
+function queueNextRound(lastTitle) {
+  if (currentRound < TOTAL_ROUNDS) {
+    setTimeout(function () {
+      currentRound++;
+      startRound();
+    }, 900);
+  } else {
+    setTimeout(function () {
+      showGameOverModal(lastTitle);
+    }, 900);
+  }
+}
 
 function renderUnifiedGrid(typedValue) {
   let html = '';
-  
-  // 기준 원문을 한 겹으로 렌더링
+
   for (let i = 0; i < currentSentence.length; i++) {
     let originalChar = currentSentence[i];
     let cls = '';
-
     let currentToDisplay = originalChar;
 
     if (i < typedValue.length) {
-      currentToDisplay = typedValue[i]; // 사용자가 단어로 친 오타, 자음/모음을 화면에 덮어씌움
+      currentToDisplay = typedValue[i];
       if (isComposing && i === typedValue.length - 1) {
         cls = 'composing';
       } else {
@@ -338,8 +273,7 @@ function renderUnifiedGrid(typedValue) {
     let displayChar = (currentToDisplay === ' ') ? '&nbsp;' : escapeHtml(currentToDisplay);
     html += '<span class="' + cls + '">' + displayChar + '</span>';
   }
-  
-  // 사용자가 원문보다 더 길게 초과해서 입력했을 경우
+
   if (typedValue.length >= currentSentence.length) {
     for (let i = currentSentence.length; i < typedValue.length; i++) {
       let extraChar = typedValue[i];
@@ -349,41 +283,36 @@ function renderUnifiedGrid(typedValue) {
       }
       html += '<span class="' + cls + '">' + (extraChar === ' ' ? '&nbsp;' : escapeHtml(extraChar)) + '</span>';
     }
-    // 초과 길이의 마지막에 커서 부착
     html += '<span class="cursor"></span>';
   }
-  
+
   textOverlayEl.innerHTML = html;
 }
 
-
-/* ==============================================
-   8. 점수 계산
-   ============================================== */
-
-function calcScore(remainingTime) {
-  var gained = SCORE_BASE + remainingTime * SCORE_PER_SECOND;
-
-  if (combo >= 1) {
-    gained += SCORE_COMBO_BONUS;
-  }
-
-  return gained;
+function calcRawScore(remainingTime, nextCombo) {
+  return SCORE_BASE + remainingTime * SCORE_PER_SECOND + getComboBonus(nextCombo);
 }
 
+function getComboBonus(nextCombo) {
+  if (nextCombo <= 1) {
+    return 0;
+  }
 
-/* ==============================================
-   9. UI 업데이트 함수
-   ============================================== */
+  return Math.min(nextCombo - 1, 4) * 50;
+}
+
+function getAdjustedScore(rawValue) {
+  return Math.round(rawValue * difficulty.multiplier);
+}
 
 function updateScoreDisplay() {
-  scoreValueEl.textContent = score;
+  scoreValueEl.textContent = getAdjustedScore(rawScore);
   triggerPop(scoreValueEl);
 }
 
 function updateTimerDisplay() {
   timerValueEl.textContent = timeLeft;
-  if (timeLeft <= 3) {
+  if (timeLeft <= getDangerThreshold()) {
     triggerPop(timerValueEl);
   }
 }
@@ -399,10 +328,10 @@ function triggerPop(el) {
 }
 
 function updateProgressBar() {
-  var percent = (timeLeft / TIME_LIMIT) * 100;
+  const percent = (timeLeft / difficulty.timeLimit) * 100;
   progressBarEl.style.width = percent + '%';
 
-  if (timeLeft <= TIMER_DANGER) {
+  if (timeLeft <= getDangerThreshold()) {
     progressBarEl.classList.add('danger');
   } else {
     progressBarEl.classList.remove('danger');
@@ -412,9 +341,9 @@ function updateProgressBar() {
 function applyTimerStyle() {
   timerBoxEl.classList.remove('timer-warning', 'timer-danger');
 
-  if (timeLeft <= TIMER_DANGER) {
+  if (timeLeft <= getDangerThreshold()) {
     timerBoxEl.classList.add('timer-danger');
-  } else if (timeLeft <= TIMER_WARNING) {
+  } else if (timeLeft <= getWarningThreshold()) {
     timerBoxEl.classList.add('timer-warning');
   }
 }
@@ -423,68 +352,66 @@ function resetTimerStyle() {
   timerBoxEl.classList.remove('timer-warning', 'timer-danger');
 }
 
-/**
- * 라운드 결과 피드백 메시지 표시
- */
+function getWarningThreshold() {
+  return Math.max(3, Math.ceil(difficulty.timeLimit * TIMER_WARNING_RATIO));
+}
+
+function getDangerThreshold() {
+  return Math.max(1, Math.ceil(difficulty.timeLimit * TIMER_DANGER_RATIO));
+}
+
 function showMessage(text, isCorrect) {
   messageEl.textContent = text;
   messageEl.className = 'message ' + (isCorrect ? 'msg-correct' : 'msg-wrong');
 }
 
-
-/* ==============================================
-   10. 게임 오버 모달
-   ============================================== */
-
 async function showGameOverModal(titleText) {
   clearInterval(timerInterval);
   hiddenInputEl.disabled = true;
 
+  finalScore = getAdjustedScore(rawScore);
   modalTitleEl.textContent = titleText;
-  modalScoreEl.textContent = nickname + '의 최종 점수: ' + score + '점!';
+  modalScoreEl.textContent = nickname + ' · ' + difficulty.label + ' · 최종 점수 ' + finalScore + '점!';
 
-  await saveRanking(nickname, score);
+  await saveRanking(nickname, finalScore, difficultyKey);
 
   gameOverModalEl.classList.remove('hidden');
 }
 
-
-/* ==============================================
-   11. 결과 화면
-   ============================================== */
-
 function showResultScreen() {
   gameOverModalEl.classList.add('hidden');
-  resultTitleEl.textContent = nickname + '의 점수는 ' + score + '점!';
+  resultTitleEl.textContent = nickname + '의 점수는 ' + finalScore + '점!';
+  resultSubtitleEl.textContent = difficulty.label + ' 난이도로 기록을 남겼어!';
   renderRanking();
   resultSectionEl.classList.remove('hidden');
 }
 
 async function renderRanking() {
-  var rankings = await loadRanking();
+  const rankings = await loadRanking();
+  let currentPlayerMarked = false;
   rankingBodyEl.innerHTML = '';
 
   if (rankings.length === 0) {
-    var emptyRow = document.createElement('tr');
-    emptyRow.innerHTML = '<td colspan="3">아직 기록이 없어요!</td>';
+    const emptyRow = document.createElement('tr');
+    emptyRow.innerHTML = '<td colspan="4">아직 기록이 없어요!</td>';
     rankingBodyEl.appendChild(emptyRow);
     return;
   }
 
   rankings.forEach(function (entry, index) {
-    var rank = index + 1;
-    var tr = document.createElement('tr');
+    const rank = index + 1;
+    const tr = document.createElement('tr');
 
     if (rank === 1) tr.classList.add('rank-1');
     else if (rank === 2) tr.classList.add('rank-2');
     else if (rank === 3) tr.classList.add('rank-3');
 
-    if (entry.nickname === nickname && entry.score === score && !tr.dataset.marked) {
+    if (entry.nickname === nickname && entry.score === finalScore && entry.difficulty === difficultyKey && !currentPlayerMarked) {
       tr.classList.add('current-player');
-      tr.dataset.marked = 'true';
+      currentPlayerMarked = true;
     }
 
-    var rankDisplay = rank + '위';
+    let rankDisplay = rank + '위';
     if (rank === 1) rankDisplay = '🥇 1위';
     else if (rank === 2) rankDisplay = '🥈 2위';
     else if (rank === 3) rankDisplay = '🥉 3위';
@@ -492,29 +419,32 @@ async function renderRanking() {
     tr.innerHTML =
       '<td>' + rankDisplay + '</td>' +
       '<td>' + escapeHtml(entry.nickname) + '</td>' +
+      '<td>' + escapeHtml(formatDifficulty(entry.difficulty)) + '</td>' +
       '<td>' + entry.score + '점</td>';
 
     rankingBodyEl.appendChild(tr);
   });
 }
 
-
-/* ==============================================
-   12. 랭킹 MongoDB API 관리
-   ============================================== */
-
-async function saveRanking(nick, s) {
+async function saveRanking(nick, scoreValue, selectedDifficulty) {
   try {
     const response = await fetch('/api/ranking/save', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'same-origin',
       body: JSON.stringify({
         nickname: nick,
-        score: s
+        score: scoreValue,
+        difficulty: selectedDifficulty
       })
     });
+
+    if (!response.ok) {
+      return false;
+    }
+
     const data = await response.json();
     return data.success;
   } catch (e) {
@@ -525,13 +455,23 @@ async function saveRanking(nick, s) {
 
 async function loadRanking() {
   try {
-    const response = await fetch('/api/ranking/get');
+    const response = await fetch('/api/ranking/get', {
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
     const data = await response.json();
     if (data.success) {
-      return data.rankings.map(item => ({
-        nickname: item.nickname,
-        score: item.score
-      }));
+      return data.rankings.map(function (item) {
+        return {
+          nickname: item.nickname,
+          score: item.score,
+          difficulty: item.difficulty || 'easy'
+        };
+      });
     }
     return [];
   } catch (e) {
@@ -540,15 +480,12 @@ async function loadRanking() {
   }
 }
 
-
-/* ==============================================
-   13. 문장 선택 유틸
-   ============================================== */
-
 function pickRandomSentence() {
-  var available = [];
-  for (var i = 0; i < SENTENCES.length; i++) {
-    if (usedIndices.indexOf(i) === -1) available.push(i);
+  let available = [];
+  for (let i = 0; i < SENTENCES.length; i++) {
+    if (usedIndices.indexOf(i) === -1) {
+      available.push(i);
+    }
   }
 
   if (available.length === 0) {
@@ -556,15 +493,21 @@ function pickRandomSentence() {
     available = SENTENCES.map(function (_, i) { return i; });
   }
 
-  var randIndex = available[Math.floor(Math.random() * available.length)];
+  const randIndex = available[Math.floor(Math.random() * available.length)];
   usedIndices.push(randIndex);
   return SENTENCES[randIndex];
 }
 
+function formatDifficulty(key) {
+  const currentDifficulty = DIFFICULTY_SETTINGS[key];
+  return currentDifficulty ? currentDifficulty.label : 'EASY';
+}
 
-/* ==============================================
-   14. 보안 유틸
-   ============================================== */
+function returnToStart() {
+  sessionStorage.removeItem('nickname');
+  sessionStorage.removeItem('difficulty');
+  window.location.href = '/start';
+}
 
 function escapeHtml(str) {
   return String(str)

@@ -598,6 +598,7 @@ ul {
   display: flex;
   gap: var(--gap-md);
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .info-box {
@@ -651,6 +652,14 @@ ul {
   font-weight: 800;
   color: var(--color-text);
   line-height: 1;
+}
+
+#difficulty-box {
+  min-width: 120px;
+}
+
+#difficulty-value {
+  font-size: 20px;
 }
 
 /* 타이머 색상 변화 (JS에서 클래스 추가) */
@@ -831,6 +840,10 @@ ul {
   display: flex;
   flex-direction: column;
   gap: var(--gap-sm);
+}
+
+.difficulty-btn {
+  width: 100%;
 }
 
 

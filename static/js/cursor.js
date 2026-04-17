@@ -57,22 +57,21 @@ function initCursor() {
   cursorEl.id = 'custom-cursor';
 
   /* 커서 이미지
-   * 경로: HTML 파일과 같은 위치 기준 → images/magic.png
-   * 실제 구조: rememberBread/images/magic.png
+   * Flask static 기준 경로
    */
   var imgEl = document.createElement('img');
   imgEl.id = 'cursor-img';
-  imgEl.src = 'images/magic.png';
+  imgEl.src = '/static/images/magic.png';
   imgEl.alt = '';
 
   /* 이미지 로드 성공 확인 */
   imgEl.addEventListener('load', function () {
-    console.log('[cursor] images/magic.png 로드 성공 ✅');
+    console.log('[cursor] /static/images/magic.png 로드 성공 ✅');
   });
 
   /* 이미지 로드 실패 시: 콘솔 에러 + 깨진 아이콘 숨김 처리 */
   imgEl.addEventListener('error', function () {
-    console.error('[cursor] images/magic.png 로드 실패 ❌ — 경로를 확인하세요: images/magic.png');
+    console.error('[cursor] /static/images/magic.png 로드 실패 ❌ — 경로를 확인하세요: /static/images/magic.png');
     /* 깨진 아이콘이 보이지 않도록 커서 요소 전체를 숨김 */
     cursorEl.style.display = 'none';
   });
