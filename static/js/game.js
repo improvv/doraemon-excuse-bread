@@ -60,6 +60,9 @@ let timerInterval = null;
 let currentSentence = '';
 let usedIndices = [];
 let isComposing = false;
+let previousInputLength = 0;
+let totalTypedCount = 0;
+let recentKeyTimes = [];
 
 const scoreValueEl = document.getElementById('score-value');
 const roundValueEl = document.getElementById('round-value');
@@ -69,6 +72,8 @@ const progressBarEl = document.getElementById('progressBar');
 const submitBtnEl = document.getElementById('submit-btn');
 const messageEl = document.getElementById('message');
 const difficultyValueEl = document.getElementById('difficulty-value');
+const typingSpeedValueEl = document.getElementById('typing-speed-value');
+const typingTotalValueEl = document.getElementById('typing-total-value');
 const textOverlayEl = document.getElementById('textOverlay');
 const hiddenInputEl = document.getElementById('hiddenInput');
 const gameOverModalEl = document.getElementById('game-over-modal');
@@ -114,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   difficultyValueEl.textContent = difficulty.label;
+  difficultyValueEl.classList.add('difficulty-' + difficultyKey);
 
   submitBtnEl.addEventListener('click', handleSubmit);
 
@@ -125,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   hiddenInputEl.addEventListener('input', function () {
+    trackTyping(hiddenInputEl.value);
     renderUnifiedGrid(hiddenInputEl.value);
   });
 
@@ -160,6 +167,7 @@ function startGame() {
   finalScore = 0;
   combo = 0;
   usedIndices = [];
+  resetTypingStats();
 
   updateScoreDisplay();
   startRound();
@@ -174,6 +182,7 @@ function startRound() {
   hiddenInputEl.value = '';
   hiddenInputEl.disabled = false;
   hiddenInputEl.focus();
+  resetTypingStats();
 
   messageEl.textContent = '';
   messageEl.className = 'message';
@@ -182,6 +191,8 @@ function startRound() {
   updateTimerDisplay();
   updateProgressBar();
   resetTimerStyle();
+  updateBreadGlow(combo);
+  updateTypingStats();
   clearInterval(timerInterval);
   timerInterval = setInterval(tickTimer, 1000);
 }
@@ -191,6 +202,7 @@ function tickTimer() {
   updateTimerDisplay();
   updateProgressBar();
   applyTimerStyle();
+  updateTypingStats();
 
   if (timeLeft <= 0) {
     clearInterval(timerInterval);
@@ -201,6 +213,7 @@ function tickTimer() {
 function handleTimeOver() {
   hiddenInputEl.disabled = true;
   combo = 0;
+  updateBreadGlow(0);
 
   showMessage('시간 초과! 콤보가 끊겼어 ⏰', false);
   queueNextRound('타임 오버!');
@@ -225,14 +238,21 @@ function handleSubmit() {
     finalScore = getAdjustedScore(rawScore);
     updateScoreDisplay();
 
+    const adjustedGain = getAdjustedScore(gained);
+    showComboDisplay(combo);
+    showScoreFloat(adjustedGain);
+    bounceBread();
+    updateBreadGlow(combo);
+
     showMessage(
-      '정답! 🎉 +' + getAdjustedScore(gained) + '점 (' + difficulty.label + ' x' + difficulty.multiplier + ', ' + combo + '콤보)',
+      '정답! 🎉 +' + adjustedGain + '점 (' + difficulty.label + ' x' + difficulty.multiplier + ', ' + combo + '콤보)',
       true
     );
 
     queueNextRound('게임 종료!');
   } else {
     combo = 0;
+    updateBreadGlow(0);
     showMessage('틀렸어... 😢 콤보가 끊겼어!', false);
     queueNextRound('게임 종료!');
   }
@@ -289,6 +309,50 @@ function renderUnifiedGrid(typedValue) {
   textOverlayEl.innerHTML = html;
 }
 
+function trackTyping(currentValue) {
+  const currentLength = currentValue.length;
+  const addedCount = Math.max(0, currentLength - previousInputLength);
+
+  if (addedCount > 0) {
+    const now = Date.now();
+    totalTypedCount += addedCount;
+
+    for (let i = 0; i < addedCount; i++) {
+      recentKeyTimes.push(now);
+    }
+  }
+
+  previousInputLength = currentLength;
+  updateTypingStats();
+}
+
+function resetTypingStats() {
+  previousInputLength = 0;
+  totalTypedCount = 0;
+  recentKeyTimes = [];
+  updateTypingStats();
+}
+
+function updateTypingStats() {
+  pruneRecentKeyTimes();
+
+  if (typingSpeedValueEl) {
+    const typingSpeed = Math.round(recentKeyTimes.length * 12);
+    typingSpeedValueEl.textContent = String(typingSpeed);
+  }
+
+  if (typingTotalValueEl) {
+    typingTotalValueEl.textContent = String(totalTypedCount);
+  }
+}
+
+function pruneRecentKeyTimes() {
+  const threshold = Date.now() - 5000;
+  recentKeyTimes = recentKeyTimes.filter(function (time) {
+    return time >= threshold;
+  });
+}
+
 function calcRawScore(remainingTime, nextCombo) {
   return SCORE_BASE + remainingTime * SCORE_PER_SECOND + getComboBonus(nextCombo);
 }
@@ -331,25 +395,28 @@ function updateProgressBar() {
   const percent = (timeLeft / difficulty.timeLimit) * 100;
   progressBarEl.style.width = percent + '%';
 
+  progressBarEl.classList.remove('warning', 'danger');
   if (timeLeft <= getDangerThreshold()) {
     progressBarEl.classList.add('danger');
-  } else {
-    progressBarEl.classList.remove('danger');
+  } else if (timeLeft <= getWarningThreshold()) {
+    progressBarEl.classList.add('warning');
   }
 }
 
 function applyTimerStyle() {
-  timerBoxEl.classList.remove('timer-warning', 'timer-danger');
+  timerBoxEl.classList.remove('timer-caution', 'timer-warning', 'timer-danger');
 
   if (timeLeft <= getDangerThreshold()) {
     timerBoxEl.classList.add('timer-danger');
   } else if (timeLeft <= getWarningThreshold()) {
     timerBoxEl.classList.add('timer-warning');
+  } else if (timeLeft <= Math.ceil(difficulty.timeLimit * 0.5)) {
+    timerBoxEl.classList.add('timer-caution');
   }
 }
 
 function resetTimerStyle() {
-  timerBoxEl.classList.remove('timer-warning', 'timer-danger');
+  timerBoxEl.classList.remove('timer-caution', 'timer-warning', 'timer-danger');
 }
 
 function getWarningThreshold() {
@@ -381,7 +448,7 @@ async function showGameOverModal(titleText) {
 function showResultScreen() {
   gameOverModalEl.classList.add('hidden');
   resultTitleEl.textContent = nickname + '의 점수는 ' + finalScore + '점!';
-  resultSubtitleEl.textContent = difficulty.label + ' 난이도로 기록을 남겼어!';
+  resultSubtitleEl.textContent = difficulty.label + ' 난이도 (점수 배율 x' + difficulty.multiplier + ') 로 기록을 남겼어!';
   renderRanking();
   resultSectionEl.classList.remove('hidden');
 }
@@ -507,6 +574,70 @@ function returnToStart() {
   sessionStorage.removeItem('nickname');
   sessionStorage.removeItem('difficulty');
   window.location.href = '/start';
+}
+
+/* ── UI 피드백 함수 ── */
+
+// 콤보 팝업: .bread-area 내 #combo-display에 span 생성
+function showComboDisplay(currentCombo) {
+  const container = document.getElementById('combo-display');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const span = document.createElement('span');
+  span.className = 'combo-text';
+
+  let level;
+  if (currentCombo >= 5)      level = 4;
+  else if (currentCombo >= 3) level = 3;
+  else if (currentCombo >= 2) level = 2;
+  else                        level = 1;
+
+  span.classList.add('level-' + level);
+  span.textContent = currentCombo >= 5
+    ? 'COMBO ' + currentCombo + '!!'
+    : 'Combo ' + currentCombo + '!';
+
+  container.appendChild(span);
+  span.addEventListener('animationend', function () {
+    if (container.contains(span)) container.removeChild(span);
+  });
+}
+
+// 점수 플로팅: 점수 박스 위에 +N 텍스트가 떠오르며 사라짐
+function showScoreFloat(adjustedGain) {
+  const rect = scoreValueEl.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'score-float-item';
+  el.textContent = '+' + adjustedGain;
+  el.style.left = (rect.left + rect.width / 2) + 'px';
+  el.style.top = rect.top + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', function () {
+    if (document.body.contains(el)) document.body.removeChild(el);
+  });
+}
+
+// 식빵 바운스: 정답 시 통통 튀는 애니메이션
+function bounceBread() {
+  if (!breadImageEl) return;
+  breadImageEl.classList.remove('bread-bounce');
+  void breadImageEl.offsetWidth;
+  breadImageEl.classList.add('bread-bounce');
+  breadImageEl.addEventListener('animationend', function handler() {
+    breadImageEl.classList.remove('bread-bounce');
+    breadImageEl.removeEventListener('animationend', handler);
+  });
+}
+
+// 식빵 글로우: 콤보 수에 따라 글로우 강도 변경
+function updateBreadGlow(currentCombo) {
+  if (!breadImageEl) return;
+  breadImageEl.classList.remove('combo-glow-1', 'combo-glow-2', 'combo-glow-3');
+  if (currentCombo >= 5)      breadImageEl.classList.add('combo-glow-3');
+  else if (currentCombo >= 3) breadImageEl.classList.add('combo-glow-2');
+  else if (currentCombo >= 1) breadImageEl.classList.add('combo-glow-1');
 }
 
 function escapeHtml(str) {

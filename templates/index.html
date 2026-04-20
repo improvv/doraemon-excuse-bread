@@ -43,6 +43,25 @@
         </div>
       </section>
 
+      <section class="typing-stats-bar" aria-label="실시간 타자 통계">
+        <div class="typing-stat-card" id="typing-speed-card">
+          <span class="typing-stat-label">실시간 타수</span>
+          <div class="typing-stat-value-row">
+            <span class="typing-stat-value" id="typing-speed-value">0</span>
+            <span class="typing-stat-unit">타/분</span>
+          </div>
+          <p class="typing-stat-help">최근 5초 입력 기준</p>
+        </div>
+        <div class="typing-stat-card" id="typing-total-card">
+          <span class="typing-stat-label">누적 입력</span>
+          <div class="typing-stat-value-row">
+            <span class="typing-stat-value" id="typing-total-value">0</span>
+            <span class="typing-stat-unit">자</span>
+          </div>
+          <p class="typing-stat-help">현재 라운드 누적</p>
+        </div>
+      </section>
+
       <!-- ===== 빵 그리드 영역 =====
            original.html 구조 채택:
            - .bread-image: 배경 이미지
@@ -54,6 +73,8 @@
         <img id="bread-image" src="{{ url_for('static', filename='images/Bread.png') }}" alt="식빵" class="bread-image" />
         <!-- 통합된 문장 전체 레이어 -->
         <div id="textOverlay" class="bread-text"></div>
+        <!-- 콤보 팝업 오버레이 -->
+        <div id="combo-display" class="combo-display-overlay"></div>
       </section>
 
       <!-- 실제 키 입력을 받는 숨겨진 textarea
