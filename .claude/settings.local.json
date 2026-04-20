@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/jinjeong/rememberBread/*.html /Users/jinjeong/rememberBread/*.css /Users/jinjeong/rememberBread/*.js)"
+    ]
+  }
+}

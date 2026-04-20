@@ -1,0 +1,1384 @@
+/* =============================================
+   style.css - 도라에몽의 빵셔틀 공통 스타일
+   =============================================
+   색상, 폰트, 간격 변수를 상단에 모아두었으니
+   나중에 이 부분만 수정하면 전체 디자인이 바뀜
+   ============================================= */
+
+/* ── CSS 변수 (디자인 토큰) ── */
+:root {
+  /* 색상 */
+  --color-bg: #0d1b3e;
+  /* 전체 배경 (밤하늘 — body gradient와 통일) */
+  /* 박스/카드 배경: 살짝 투명한 흰색 */
+  --color-surface: rgba(255, 255, 255, 0.88);
+  --color-primary: #3a9ad9;
+  /* 주요 버튼, 포인트 색 */
+  --color-primary-hover: #2b7fb8;
+  --color-secondary: #e0e0e0;
+  /* 보조 버튼 */
+  --color-secondary-hover: #c8c8c8;
+  --color-accent: #f5a623;
+  /* 강조 색 (타이머, 콤보 등) */
+  --color-danger: #e74c3c;
+  /* 경고, 오류 */
+  --color-text: #333333;
+  /* 기본 텍스트 */
+  --color-text-light: #777777;
+  /* 보조 텍스트 */
+  --color-border: #dddddd;
+  /* 테두리 */
+  --color-progress: #4caf50;
+  /* 프로그레스바 */
+  --color-progress-low: #f44336;
+  /* 프로그레스바 (위험 구간) */
+
+  /* 폰트 */
+  --font-main: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-size-base: 16px;
+
+  /* 간격 */
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 40px;
+
+  /* 테두리 반경 */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* 그림자 */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 리셋 & 기본 ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  line-height: 1.6;
+  /* 밤하늘 그라데이션 배경 */
+  background: linear-gradient(160deg,
+      #0b0e2a 0%,
+      #101840 30%,
+      #1a2a5e 60%,
+      #0d1b3e 100%);
+  min-height: 100vh;
+  /* 배경 고정: 스크롤해도 밤하늘 유지 */
+  background-attachment: fixed;
+}
+
+/* ── 밤하늘 별 레이어 ── */
+/* JS(stars.js)로 .star 요소를 body에 추가 */
+.star {
+  position: fixed;
+  border-radius: 50%;
+  background-color: #ffffff;
+  pointer-events: none;
+  /* 결과 오버레이(z-index:200) 위에도 별이 보이도록 높게 설정
+     커서(z-index:99999)보다는 아래 유지 */
+  z-index: 210;
+  /* 기본 반짝임 애니메이션 — JS에서 duration/delay 개별 지정 */
+  animation: star-twinkle var(--star-duration, 2s) var(--star-delay, 0s) ease-in-out infinite alternate;
+}
+
+/* 별 반짝임: 투명도 + 크기 변화 */
+@keyframes star-twinkle {
+  0% {
+    opacity: 0.15;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ══════════════════════════════════════════
+   공통 애니메이션 keyframes
+   ══════════════════════════════════════════ */
+
+/* 제목: 밤하늘 글로우 shimmer */
+@keyframes title-glow {
+  0% {
+    text-shadow:
+      0 0 16px rgba(126, 207, 255, 0.4),
+      0 0 32px rgba(126, 207, 255, 0.1);
+    letter-spacing: -0.5px;
+  }
+
+  50% {
+    text-shadow:
+      0 0 28px rgba(126, 207, 255, 0.9),
+      0 0 56px rgba(126, 207, 255, 0.4),
+      0 0 80px rgba(180, 120, 255, 0.2);
+    letter-spacing: 1px;
+  }
+
+  100% {
+    text-shadow:
+      0 0 16px rgba(126, 207, 255, 0.4),
+      0 0 32px rgba(126, 207, 255, 0.1);
+    letter-spacing: -0.5px;
+  }
+}
+
+/* 부제목: 페이드 인아웃 펄스 */
+@keyframes subtitle-pulse {
+
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 박스 최초 등장: 아래서 올라오며 페이드 인 */
+@keyframes box-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 정보 박스 숫자 변할 때 살짝 튀는 효과 (JS에서 클래스 추가) */
+@keyframes value-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 결과 타이틀 등장 */
+@keyframes result-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 콤보 팝업: 튀어나오며 위로 페이드아웃 */
+@keyframes combo-pop {
+  0%   { transform: scale(0.4)  translateY(0px);   opacity: 0; }
+  25%  { transform: scale(1.3)  translateY(-8px);  opacity: 1; }
+  60%  { transform: scale(1.05) translateY(-16px); opacity: 1; }
+  100% { transform: scale(0.9)  translateY(-32px); opacity: 0; }
+}
+
+/* 점수 플로팅: 위로 떠오르며 페이드아웃 */
+@keyframes score-float-up {
+  0%   { transform: translateX(-50%) translateY(0px)   scale(0.7); opacity: 0; }
+  20%  { transform: translateX(-50%) translateY(-12px) scale(1.2); opacity: 1; }
+  65%  { transform: translateX(-50%) translateY(-28px) scale(1.0); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-52px) scale(0.9); opacity: 0; }
+}
+
+/* 식빵 바운스: 정답 시 통통 튐 */
+@keyframes bread-bounce {
+  0%   { transform: scale(1)    translateY(0px);  }
+  28%  { transform: scale(1.04) translateY(-7px); }
+  56%  { transform: scale(0.98) translateY(3px);  }
+  80%  { transform: scale(1.01) translateY(-2px); }
+  100% { transform: scale(1)    translateY(0px);  }
+}
+
+/* 타이머 위험구간 펄스 */
+@keyframes timer-danger-pulse {
+  0%, 100% { transform: scale(1);    }
+  50%       { transform: scale(1.12); }
+}
+
+/* 페이지 콘텐츠가 별 위에 오도록 */
+.start-wrapper,
+.game-wrapper,
+.result-overlay,
+.modal-overlay {
+  position: relative;
+  z-index: 1;
+}
+
+/* 이미지가 없을 때 레이아웃 깨지지 않게 */
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul {
+  list-style: none;
+}
+
+/* ── 유틸리티 ── */
+.hidden {
+  display: none !important;
+}
+
+
+/* ==============================================
+   공통 버튼 스타일
+   ============================================== */
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  /* cursor: pointer 제거 — 전역 cursor: none으로 통일 */
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  text-align: center;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* 주요 버튼 */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  box-shadow: 0 0 18px rgba(58, 154, 217, 0.55);
+  transform: translateY(-2px);
+}
+
+/* 보조 버튼 */
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary-hover);
+}
+
+/* 큰 버튼 */
+.btn-large {
+  padding: 14px 36px;
+  font-size: 17px;
+  border-radius: var(--radius-md);
+}
+
+/* 이미지 대체 플레이스홀더 공통 */
+.image-placeholder {
+  display: none;
+  /* onerror 시 JS에서 flex로 전환 */
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-secondary);
+  border-radius: var(--radius-md);
+  font-size: 48px;
+  color: var(--color-text-light);
+  width: 100%;
+  height: 100%;
+}
+
+
+/* ==============================================
+   시작 화면 (start.html)
+   ============================================== */
+
+.page-start {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--gap-lg) var(--gap-md);
+}
+
+/* 전체 래퍼: 가운데 정렬 컨테이너 */
+.start-wrapper {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+/* 시작화면 헤더 */
+.start-header {
+  text-align: center;
+  padding-top: var(--gap-lg);
+}
+
+.start-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.game-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #7ecfff;
+  letter-spacing: -0.5px;
+  /* 밤하늘 글로우 shimmer 반복 */
+  animation: title-glow 3s ease-in-out infinite;
+}
+
+.game-subtitle {
+  margin-top: var(--gap-sm);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  /* 부드럽게 숨쉬는 펄스 */
+  animation: subtitle-pulse 3.5s ease-in-out infinite;
+}
+
+/* ── float 애니메이션 keyframes ── */
+@keyframes doraemon-float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* 도라에몽 + 말풍선 행 */
+.doraemon-chat-section {
+  display: flex;
+  /* 꼬리가 말풍선 세로 중앙에서 나오므로 중앙 정렬 */
+  align-items: center;
+  gap: 0;
+}
+
+/* float 래퍼: 애니메이션 적용 대상 */
+.doraemon-float-wrap {
+  flex-shrink: 0;
+  animation: doraemon-float 2.4s ease-in-out infinite;
+}
+
+/* 이미지 박스 */
+.doraemon-float-box {
+  width: 130px;
+  height: 130px;
+  position: relative;
+}
+
+.doraemon-float-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 이미지 없을 때 플레이스홀더 */
+.start-doraemon-placeholder {
+  width: 130px;
+  height: 130px;
+  font-size: 56px;
+  display: none;
+}
+
+/* 시작 화면 말풍선 */
+.start-speech-bubble {
+  position: relative;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.8;
+  box-shadow: var(--shadow-sm);
+  /* 말풍선이 도라에몽 옆에 꽉 차도록 */
+  flex: 1;
+  /* 꼬리가 왼쪽(도라에몽 방향)에 붙도록 왼쪽 여백 추가 */
+  margin-left: 10px;
+}
+
+/* 말풍선 꼬리 (흰 면) — 왼쪽으로 뾰족하게 */
+.start-speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 12px 8px 0;
+  border-style: solid;
+  /* 오른쪽 border만 색상 — 왼쪽으로 향하는 삼각형 */
+  border-color: transparent rgba(255, 255, 255, 0.88) transparent transparent;
+}
+
+/* 말풍선 꼬리 (테두리) */
+.start-speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 10px 14px 10px 0;
+  border-style: solid;
+  border-color: transparent var(--color-border) transparent transparent;
+}
+
+/* 닉네임 입력 섹션 (말풍선 아래) */
+.nickname-section {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--gap-lg);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  animation: box-enter 0.5s ease both;
+  animation-delay: 0.15s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nickname-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(126, 207, 255, 0.18);
+}
+
+.input-row {
+  display: flex;
+  justify-content: center;
+}
+
+.nickname-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-family: var(--font-main);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  text-align: center;
+  transition: border-color 0.15s ease;
+}
+
+.nickname-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* 오류 메시지 */
+.error-msg {
+  color: var(--color-danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 게임 소개 & 방법 섹션 */
+.game-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  /* 상위 wrapper의 gap(--gap-lg)으로만 간격 제어 — 별도 margin 제거 */
+}
+
+.game-description {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md) var(--gap-lg);
+  box-shadow: var(--shadow-sm);
+  font-size: 14px;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.8;
+  animation: box-enter 0.5s ease both;
+  animation-delay: 0.25s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-description:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(126, 207, 255, 0.18);
+}
+
+.how-to-play {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md) var(--gap-lg);
+  box-shadow: var(--shadow-sm);
+  animation: box-enter 0.5s ease both;
+  animation-delay: 0.35s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.how-to-play:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(126, 207, 255, 0.18);
+}
+
+.how-to-play-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--gap-sm);
+}
+
+.how-to-play-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.how-to-play-list li {
+  font-size: 13px;
+  color: var(--color-text);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.6;
+}
+
+/* 리스트 아이템 앞 점 */
+.how-to-play-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* 시작 버튼 섹션 */
+.start-btn-section {
+  display: flex;
+  justify-content: center;
+  /* 게임 방법 박스와의 간격 확보 */
+  padding-bottom: var(--gap-xl);
+}
+
+
+/* ==============================================
+   게임 화면 (index.html)
+   ============================================== */
+
+.page-game {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--gap-md);
+}
+
+/* 게임 전체 래퍼 */
+.game-wrapper {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+/* 게임 화면 헤더 */
+.game-header {
+  text-align: center;
+  padding-top: var(--gap-md);
+}
+
+.game-title-small {
+  font-size: 20px;
+  font-weight: 700;
+  color: #7ecfff;
+  animation: title-glow 3s ease-in-out infinite;
+}
+
+/* 메인 게임 레이아웃 */
+.game-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+/* ── 정보 박스 3개 ── */
+.info-bar {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.info-box {
+  flex: 1;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: box-enter 0.45s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(126, 207, 255, 0.08);
+}
+
+/* 정보 박스 각각 등장 딜레이 */
+#score-box {
+  animation-delay: 0.05s;
+}
+
+#round-box {
+  animation-delay: 0.12s;
+}
+
+#timer-box {
+  animation-delay: 0.19s;
+}
+
+.info-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(126, 207, 255, 0.2);
+}
+
+/* 숫자 변화 시 pop 효과 (JS에서 .value-pop 클래스 추가/제거) */
+.info-value.value-pop {
+  animation: value-pop 0.25s ease;
+}
+
+.info-label {
+  font-size: 11px;
+  color: var(--color-text-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+#difficulty-box {
+  min-width: 120px;
+}
+
+#difficulty-value {
+  font-size: 20px;
+}
+
+/* 타이머 색상 변화 (JS에서 클래스 추가) */
+#timer-box.timer-caution .info-value {
+  color: #f5c842;
+  transition: color 0.3s ease;
+}
+
+#timer-box.timer-warning {
+  border-color: rgba(245, 166, 35, 0.45);
+  background-color: rgba(245, 166, 35, 0.07);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+#timer-box.timer-warning .info-value {
+  color: var(--color-accent);
+}
+
+#timer-box.timer-danger {
+  border-color: rgba(231, 76, 60, 0.5);
+  background-color: rgba(231, 76, 60, 0.09);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+#timer-box.timer-danger .info-value {
+  color: var(--color-danger);
+  animation: timer-danger-pulse 0.65s ease-in-out infinite;
+}
+
+/* 난이도 색상 (JS에서 클래스 추가) */
+.info-value.difficulty-easy   { color: #4caf50; }
+.info-value.difficulty-normal { color: var(--color-primary); }
+.info-value.difficulty-hard   { color: var(--color-danger); font-weight: 900; }
+
+.typing-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.typing-stat-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(240, 247, 255, 0.84) 100%);
+  border: 1px solid rgba(126, 207, 255, 0.18);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  animation: box-enter 0.45s ease both;
+}
+
+#typing-speed-card {
+  animation-delay: 0.24s;
+}
+
+#typing-total-card {
+  animation-delay: 0.31s;
+}
+
+.typing-stat-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+}
+
+.typing-stat-value-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.typing-stat-value {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 900;
+  color: #1b4f9c;
+}
+
+.typing-stat-unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-light);
+  padding-bottom: 3px;
+}
+
+.typing-stat-help {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6a7a92;
+}
+
+/* ── 식빵 이미지 영역 ── */
+.bread-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+.bread-image-box {
+  position: relative;
+  width: 100%;
+  /* 이미지가 충분히 크게 보이도록 높이 확대 */
+  height: 420px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* 흰 박스 배경 제거 */
+  background-color: transparent;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bread-image-box img {
+  width: 100%;
+  height: 100%;
+  /* cover로 박스를 꽉 채움 */
+  object-fit: cover;
+  object-position: center;
+}
+
+/* 빵 플레이스홀더 */
+.bread-placeholder {
+  font-size: 120px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* 문장 오버레이: 빵 이미지 중앙에 배치, 배경 투명 */
+.sentence-overlay {
+  position: absolute;
+  /* 상하 중앙 정렬 */
+  top: 50%;
+  /* 좌우 여백을 충분히 줘서 이미지 안에 완전히 들어오게 */
+  left: 50%;
+  right: 50%;
+  transform: translateY(-50%);
+  /* 배경 투명 */
+  background-color: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sentence-text {
+  /* 폰트 크기 키우되 이미지 너비에 맞게 wrapping */
+  font-size: 20px;
+  font-weight: 800;
+  /* 진한 갈색 텍스트 */
+  color: #4a2500;
+  text-align: center;
+  line-height: 1.9;
+  word-break: keep-all;
+  /* 반드시 줄바꿈되도록 (pre-wrap 제거, normal로) */
+  white-space: normal;
+  /* 이미지 위에서도 읽히도록 흰색 외곽선 */
+  text-shadow:
+    0 2px 4px rgba(255, 255, 255, 0.8),
+    0 -2px 4px rgba(255, 255, 255, 0.8),
+    2px 0 4px rgba(255, 255, 255, 0.8),
+    -2px 0 4px rgba(255, 255, 255, 0.8);
+  /* 혹시라도 넘칠 경우 강제 줄바꿈 */
+  overflow-wrap: break-word;
+  width: 100%;
+}
+
+/* 콤보 표시 */
+.combo-display {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-accent);
+  text-align: center;
+  height: 24px;
+  /* 없을 때도 공간 유지 */
+}
+
+.combo-display #combo-value {
+  font-size: 22px;
+}
+
+/* ── 입력창 ── */
+.input-section {
+  display: flex;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: var(--font-main);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.15s ease;
+  background-color: var(--color-surface);
+}
+
+.answer-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* 정답/오답 시 테두리 색 변화 (JS에서 클래스 추가) */
+.answer-input.correct {
+  border-color: #4caf50;
+  background-color: #f0fdf4;
+}
+
+.answer-input.wrong {
+  border-color: var(--color-danger);
+  background-color: #fff5f5;
+}
+
+/* ── 프로그레스바 ── */
+.progress-section {
+  width: 100%;
+}
+
+.progress-bar-wrapper {
+  width: 100%;
+  height: 10px;
+  background-color: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 100%;
+  /* JS로 줄어드는 효과 */
+  background-color: var(--color-progress);
+  border-radius: 999px;
+  transition: width 0.1s linear, background-color 0.3s ease;
+}
+
+/* 프로그레스바 위험 구간 색상 (JS에서 클래스 추가) */
+.progress-bar.danger {
+  background-color: var(--color-progress-low);
+}
+
+/* ── 버튼 영역 (게임 중: 식사 버튼만) ── */
+.button-section {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: center;
+  padding-bottom: var(--gap-lg);
+}
+
+.button-section .btn {
+  flex: 1;
+  max-width: 260px;
+}
+
+@media (max-width: 768px) {
+  .info-bar {
+    gap: 12px;
+  }
+
+  .info-box {
+    min-width: calc(50% - 6px);
+  }
+
+  .typing-stats-bar {
+    position: sticky;
+    bottom: 10px;
+    z-index: 5;
+  }
+
+  .typing-stat-card {
+    padding: 11px 13px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(232, 243, 255, 0.9) 100%);
+  }
+
+  .typing-stat-value {
+    font-size: 26px;
+  }
+
+  .typing-stat-help {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-game {
+    padding: 12px;
+  }
+
+  .typing-stats-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    bottom: 8px;
+  }
+
+  .typing-stat-card {
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .typing-stat-label {
+    font-size: 10px;
+  }
+
+  .typing-stat-value {
+    font-size: 24px;
+  }
+
+  .typing-stat-unit {
+    font-size: 12px;
+  }
+}
+
+/* ── 모달 버튼 두 개 나란히 ── */
+.modal-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.difficulty-btn {
+  width: 100%;
+  color: #ffffff;
+  font-weight: 800;
+  border: 1px solid transparent;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.difficulty-btn:hover {
+  transform: translateY(-2px);
+}
+
+.difficulty-btn-easy {
+  background: linear-gradient(135deg, #79c85b 0%, #43a047 100%);
+}
+
+.difficulty-btn-easy:hover {
+  background: linear-gradient(135deg, #8bd56c 0%, #4caf50 100%);
+  box-shadow: 0 0 18px rgba(76, 175, 80, 0.45);
+}
+
+.difficulty-btn-normal {
+  background: linear-gradient(135deg, #53ace6 0%, #2b7fb8 100%);
+}
+
+.difficulty-btn-normal:hover {
+  background: linear-gradient(135deg, #67b8ec 0%, #3a9ad9 100%);
+  box-shadow: 0 0 18px rgba(58, 154, 217, 0.45);
+}
+
+.difficulty-btn-hard {
+  background: linear-gradient(135deg, #ff7a6b 0%, #e74c3c 100%);
+}
+
+.difficulty-btn-hard:hover {
+  background: linear-gradient(135deg, #ff8b7d 0%, #ef5b4b 100%);
+  box-shadow: 0 0 18px rgba(231, 76, 60, 0.45);
+}
+
+
+/* ==============================================
+   게임 오버 모달
+   ============================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--gap-xl) var(--gap-lg);
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.modal-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--color-danger);
+}
+
+.modal-score {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+
+/* ==============================================
+   결과 화면 오버레이
+   ============================================== */
+
+.result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* 시작/게임 화면과 동일한 밤하늘 그라데이션 */
+  background: linear-gradient(160deg,
+      #0b0e2a 0%,
+      #101840 30%,
+      #1a2a5e 60%,
+      #0d1b3e 100%);
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--gap-lg) var(--gap-md);
+  z-index: 200;
+}
+
+.result-content {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+  padding-bottom: var(--gap-xl);
+}
+
+/* 결과 타이틀 */
+.result-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #7ecfff;
+  text-align: center;
+  line-height: 1.4;
+  animation:
+    result-title-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+    title-glow 3s ease-in-out 0.6s infinite;
+}
+
+/* 도라에몽 + 말풍선 행 — 도라에몽 왼쪽, 말풍선 오른쪽 */
+.result-doraemon-row {
+  display: flex;
+  /* 꼬리가 말풍선 세로 중앙에서 나오므로 중앙 정렬 */
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+/* 도라에몽 이미지 박스 — float 애니메이션 적용 */
+.result-doraemon-img-box {
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  position: relative;
+  /* 시작 화면과 동일한 float 애니메이션 재사용 */
+  animation: doraemon-float 2.4s ease-in-out infinite;
+}
+
+.result-doraemon-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.result-doraemon-placeholder {
+  width: 110px;
+  height: 110px;
+  font-size: 48px;
+  display: none;
+}
+
+/* 말풍선 — 시작화면과 동일한 왼쪽 꼬리 방향 */
+.speech-bubble {
+  position: relative;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.7;
+  box-shadow: var(--shadow-sm);
+  max-width: 220px;
+  /* 꼬리가 왼쪽에서 나오므로 도라에몽과의 간격 확보 */
+  margin-left: 10px;
+}
+
+/* 말풍선 꼬리 흰 면 — 왼쪽(도라에몽 방향)으로 뾰족하게 */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 12px 8px 0;
+  border-style: solid;
+  border-color: transparent rgba(255, 255, 255, 0.88) transparent transparent;
+}
+
+/* 말풍선 꼬리 테두리 */
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 10px 14px 10px 0;
+  border-style: solid;
+  border-color: transparent var(--color-border) transparent transparent;
+}
+
+/* 랭킹 영역 */
+.ranking-area {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--gap-lg);
+  box-shadow: var(--shadow-sm);
+  animation: box-enter 0.55s ease 0.3s both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(126, 207, 255, 0.1);
+}
+
+.ranking-area:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(126, 207, 255, 0.18);
+}
+
+.ranking-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--gap-md);
+  text-align: center;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.ranking-table thead th {
+  font-weight: 700;
+  color: var(--color-text-light);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ranking-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 1~3위 강조 */
+.ranking-table tbody tr.rank-1 td {
+  font-weight: 800;
+  color: #c9a227;
+  /* 금색 */
+}
+
+.ranking-table tbody tr.rank-2 td {
+  font-weight: 700;
+  color: #8e9aaf;
+  /* 은색 */
+}
+
+.ranking-table tbody tr.rank-3 td {
+  font-weight: 700;
+  color: #a0522d;
+  /* 동색 */
+}
+
+/* 현재 플레이어 행 강조 */
+.ranking-table tbody tr.current-player td {
+  background-color: #eaf4ff;
+}
+
+/* 결과 버튼 영역 */
+.result-btn-area {
+  display: flex;
+  justify-content: center;
+}
+
+
+/* ==============================================
+   커스텀 마우스 커서
+   ============================================== */
+
+/* ── 기본 커서 전체 숨기기 ── */
+/* html까지 포함해야 루트 레벨 커서도 사라짐 */
+html,
+html *,
+html *::before,
+html *::after {
+  cursor: none !important;
+}
+
+/* ── 커서 컨테이너 ── */
+#custom-cursor {
+  /* 화면 왼쪽 상단 기준, transform으로 이동 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--cursor-size, 44px);
+  height: var(--cursor-size, 44px);
+  pointer-events: none;
+  /* 클릭 / 이벤트 절대 방해하지 않음 */
+  z-index: 99999;
+  will-change: transform;
+  /* GPU 레이어로 올려 성능 최적화 */
+  /* 처음에는 숨겨두고 cursor-visible 클래스 추가 시 보이게 */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+#custom-cursor.cursor-visible {
+  opacity: 1;
+}
+
+/* ── 커서 이미지: 좌우 반전 ── */
+#cursor-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  /* 좌우 반전 필수 */
+  transform: scaleX(-1);
+  transition: transform 0.15s ease;
+}
+
+/* ── hover 시 이미지 확대 ── */
+#custom-cursor.cursor-hover #cursor-img {
+  /* scaleX(-1) 유지 + 전체 scale 확대 */
+  transform: scaleX(-1) scale(var(--cursor-hover-scale, 1.55));
+}
+
+/* ── spark 반짝이 입자 ── */
+.cursor-spark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  will-change: transform, opacity;
+  animation: spark-fly 0.6s ease-out forwards;
+}
+
+/* spark: 퍼지면서 사라지는 keyframe */
+@keyframes spark-fly {
+  0% {
+    opacity: 0.95;
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0.1);
+  }
+}
+
+/* prefers-reduced-motion: spark 애니메이션 비활성화 */
+@media (prefers-reduced-motion: reduce) {
+  .cursor-spark {
+    display: none;
+  }
+}

@@ -1,0 +1,232 @@
+/* =============================================
+   basic.css - 빵 그리드 영역 전용 스타일
+   style.css 이후 로드되어 게임 그리드 부분만 담당
+   ============================================= */
+
+
+/* ── 빵 영역 컨테이너 ──
+   이미지 자체만 보이도록 배경·그림자 없음 */
+.bread-area {
+  position: relative;
+  width: 100%;
+  background: transparent;
+}
+
+/* ── 식빵 배경 이미지 (원본 비율 그대로) ── */
+.bread-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  filter: none;
+  opacity: 1;
+}
+
+/* ── 공통 텍스트 레이어 ──
+   두 레이어(questionText / typedText)가 절대 위치로 겹침.
+   inset 퍼센트는 식빵 크러스트(가장자리) 너비에 맞춤.     */
+.bread-text {
+  position: absolute;
+  /* 위 14% / 좌우 9% / 아래 10% — 식빵 안쪽 흰 영역 기준 */
+  top:    14%;
+  bottom: 10%;
+  left:   16%;
+  right:  28%;
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  gap: 0;
+
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+}
+
+/* ── 통합 상태 처리 레이어 ── */
+.bread-text {
+  pointer-events: none; /* 클릭 방해 금지 */
+}
+
+/* 기본 상태 (아직 안 친 원문 글자) */
+.bread-text span {
+  color: rgba(90, 55, 20, 0.38);
+  position: relative;
+  white-space: pre-wrap; /* 공백 유지 보장 */
+}
+
+/* 정답 글자 */
+.bread-text span.correct {
+  color: #1b3a0f;
+}
+
+/* 오답 글자 */
+.bread-text span.wrong {
+  color: #c62828;
+  text-decoration: underline;
+  text-decoration-color: #e57373;
+  text-underline-offset: 2px;
+}
+
+/* 추가로 초과되어 잘못 타이핑 된 글자 */
+.bread-text span.extra {
+  color: #c62828;
+  text-decoration: underline;
+  text-decoration-color: #e57373;
+}
+
+/* IME 한글 조합 중인 글자 */
+.bread-text span.composing {
+  color: rgba(80, 45, 10, 0.65);
+  border-bottom: 2px solid rgba(80, 45, 10, 0.5);
+}
+
+/* 커서: 현재 입력되어야 하는 글자의 왼쪽에 표시 */
+.bread-text span.cursor {
+  border-left: 2.5px solid rgba(70, 40, 8, 0.85);
+  margin-left: -1px;
+  animation: cursor-blink 0.75s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { border-left-color: rgba(70, 40, 8, 0.85); }
+  50%       { border-left-color: transparent; }
+}
+
+
+/* ── 콤보 팝업 오버레이 ──
+   .bread-area(position:relative) 안에 absolute 배치
+   left:50% + transform:translateX(-50%)으로 중앙 정렬,
+   JS가 span.combo-text 를 동적으로 append/remove */
+.combo-display-overlay {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 20;
+  text-align: center;
+}
+
+.combo-text {
+  display: block;
+  white-space: nowrap;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  animation: combo-pop 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 콤보 레벨별 크기·색·글로우 */
+.combo-text.level-1 {
+  font-size: 20px;
+  color: #f5c842;
+  text-shadow: 0 0 10px rgba(245, 200, 66, 0.6);
+}
+.combo-text.level-2 {
+  font-size: 25px;
+  color: #f5a623;
+  text-shadow: 0 0 14px rgba(245, 166, 35, 0.75);
+}
+.combo-text.level-3 {
+  font-size: 30px;
+  color: #ff7043;
+  text-shadow:
+    0 0 16px rgba(255, 112, 67, 0.85),
+    0 0 32px rgba(255, 112, 67, 0.4);
+}
+.combo-text.level-4 {
+  font-size: 36px;
+  color: #ff4757;
+  text-shadow:
+    0 0 18px rgba(255, 71, 87, 0.95),
+    0 0 36px rgba(255, 71, 87, 0.55),
+    0 0 60px rgba(255, 71, 87, 0.25);
+}
+
+
+/* ── 점수 플로팅 숫자 (JS가 body에 position:fixed로 추가) ── */
+.score-float-item {
+  position: fixed;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 900;
+  color: #7ecfff;
+  text-shadow: 0 0 10px rgba(126, 207, 255, 0.75);
+  pointer-events: none;
+  animation: score-float-up 1.25s ease-out forwards;
+  z-index: 9999;
+}
+
+
+/* ── 식빵 바운스 (JS에서 클래스 추가/제거) ── */
+.bread-image.bread-bounce {
+  animation: bread-bounce 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── 식빵 콤보 글로우 (콤보 수준에 따라 JS에서 클래스 교체) ── */
+.bread-image.combo-glow-1 {
+  filter: drop-shadow(0 0 10px rgba(245, 200, 66, 0.55));
+  transition: filter 0.35s ease;
+}
+.bread-image.combo-glow-2 {
+  filter: drop-shadow(0 0 16px rgba(245, 166, 35, 0.75));
+  transition: filter 0.35s ease;
+}
+.bread-image.combo-glow-3 {
+  filter:
+    drop-shadow(0 0 20px rgba(255, 112, 67, 0.9))
+    drop-shadow(0 0 40px rgba(255, 71, 87, 0.45));
+  transition: filter 0.35s ease;
+}
+
+
+/* ── 프로그레스바 warning 구간 (주황) ── */
+.progress-bar.warning {
+  background-color: #f5a623;
+}
+
+
+/* ── 숨겨진 textarea (화면 밖 배치) ── */
+.hidden-input {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 16px; /* iOS 자동 줌 방지 */
+}
+
+
+/* ── 프로그레스 래퍼 ── */
+.progress-wrap {
+  width: 100%;
+  height: 10px;
+  background-color: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+
+/* ── 피드백 메시지 ── */
+.message {
+  min-height: 1.6rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.message.msg-correct {
+  color: #a8e6a3;
+}
+
+.message.msg-wrong {
+  color: #ffaaaa;
+}
